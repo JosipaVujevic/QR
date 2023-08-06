@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+	<title>
+		EASY WIFI CONNECTION QR GENERATOR		
+	</title>
+
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.debug.js"></script>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1 class="py-5">WiFi QR Code Generator</h1>
+
+        <div class="row justify-content-left"> <!-- Wraps the form inputs in a grid row -->
+        	<div class="col-lg-6" id="inputForm"> <!-- This sets the width to half (6 out of 12 columns) on large screens -->
+
+
+		        <div class="form-group">
+
+		            <label for="wifiName" class="form-label">WiFi Name</label>
+		            <input type="text" class="form-control" id="wifiName">
+		            <small id="wifiNameError" class="form-text text-danger" style="display: none;"></small>
+
+		        </div>
+
+		        <div class="form-group">
+
+		            <label for="wifiPassword" class="form-label">WiFi Password</label>
+		            <input type="text" class="form-control" id="wifiPassword">
+		            <small id="wifiPasswordError" class="form-text text-danger" style="display: none;"></small>
+
+		        </div>
+
+		        <div class="form-group">
+
+		            <label for="wifiType" class="form-label">WiFi Authentication Type</label>
+		            <select class="form-control" id="wifiType">
+		                <option value="WPA">WPA/WPA2</option>
+		                <option value="WEP">WEP</option>
+		                <option value="nopass">None (Open Network)</option>
+		            </select>
+
+		        </div>
+
+		        <button type="submit" id="generateButton" class="btn btn-primary my-2">Generate QR Code</button>
+
+		    	<div id="qrCodePlaceholder" class="my-4"></div>
+
+		    	<button type="button" id="downloadButton" class="btn btn-success my-2" style="display: none;">Download PDF</button>
+
+		    </div>
+
+		</div>
+
+    </div>
+
+    <script>
+    	document.addEventListener('DOMContentLoaded', function() {
+
+	    	var generateButton = document.getElementById('generateButton');
+	        var downloadButton = document.getElementById('downloadButton');
+	        var wifiName = document.getElementById('wifiName');
+	        var wifiPassword = document.getElementById('wifiPassword');
+	        var wifiType = document.getElementById('wifiType');
+	        var qrCodePlaceholder = document.getElementById('qrCodePlaceholder');
+	        
+	        var qrCode;
+	        
+	        //micemo qr code ako mijenjamo inpute
+
+	        function removeQRCode() {
+	        	if(qrCode) {
+	        		qrCode.clear();
+	        		qrCode = null;
+	        		qrCodePlaceholder.innerHTML = "";
+	        	}
+	        	generateButton.style.display = 'block';
+	            downloadButton.style.display = 'none';
+	        }
+
+	        wifiName.addEventListener('input', removeQRCode);
+	        wifiPassword.addEventListener('input', removeQRCode);
+	        wifiType.addEventListener('change', removeQRCode);
+
+	        function validateForm() {
+    			var wifiNameValue = wifiName.value;
+			    var wifiPasswordValue = wifiPassword.value;
+
+			    var problematicChars = /[;,:"]/;
+
+			    // Check for special characters
+			    if (problematicChars.test(wifiNameValue) || problematicChars.test(wifiPasswordValue)) {
+			        alert('WiFi Name and Password should not contain the following characters: ; , : "');
+			        return false;
+			    }
+
+			    // Optional: Check for non-ASCII characters
+			    if (!/^[\x00-\x7F]*$/.test(wifiNameValue) || !/^[\x00-\x7F]*$/.test(wifiPasswordValue)) {
+			        alert('Please avoid using non-ASCII characters in WiFi Name and Password.');
+			        return false;
+			    }
+
+			    // Check the total length of the QR code content (you can adjust the maximum allowed length as per your requirements)
+			    var totalLength = `WIFI:T:${wifiType.value};S:${wifiNameValue};P:${wifiPasswordValue};;`.length;
+			    if (totalLength > 30) {  // This is just a sample limit. You might want to adjust it based on your needs.
+			        alert('The combined length of WiFi Name and Password is too long for a QR code.');
+			        return false;
+			    }
+
+			    return true;
+			}
+
+	        generateButton.addEventListener('click', function() {
+	        	console.log("Generate button clicked!"); 
+	        	if (!validateForm()) {
+        			return;
+    			}
+
+    			wifiNameValue = document.getElementById('wifiName').value;
+        		wifiPasswordValue = document.getElementById('wifiPassword').value;
+        		wifiTypeValue = document.getElementById('wifiType').value;
+
+	            
+	            var wifiInfo = `WIFI:T:${wifiTypeValue};S:${wifiNameValue};P:${wifiPasswordValue};;`;
+
+	            if(qrCode) {
+	                qrCode.clear();
+	            }
+	            
+	            qrCode = new QRCode(qrCodePlaceholder, wifiInfo);
+	            
+	            generateButton.style.display = 'none';
+	            downloadButton.style.display = 'block';
+	        });
+	        
+	        downloadButton.addEventListener('click', function() {
+
+	            var pdf = new jsPDF();
+	            var imgData = qrCodePlaceholder.getElementsByTagName('img')[0].src;
+
+	            pdf.addImage(imgData, 'JPEG', 15, 40, 180, 180);
+	            pdf.save("QRCode.pdf");
+	        });
+
+	        wifiType.addEventListener('change', function() {
+
+	    		if (wifiType.value === 'nopass') {
+	        		wifiPassword.value = '';
+	        		wifiPassword.disabled = true;
+	    		} else {
+	        		wifiPassword.disabled = false;
+	    		}
+
+			});
+
+		});
+
+    </script>
+
+</body>
+
+</html>
